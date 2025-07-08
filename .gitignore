@@ -1,0 +1,5 @@
+# Timesheets
+examples/
+
+# python cache
+__pycache__/
