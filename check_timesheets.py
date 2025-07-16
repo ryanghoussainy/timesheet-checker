@@ -43,12 +43,11 @@ def read_timesheet(file_path: str) -> list[tuple[str, str, str, str]]:
         location_hours = [row[loc] if pd.notna(row[loc]) else 0 for loc in location_list]
         timesheet_data.append((
             sum(location_hours),
-            normalise_time(row['Start']),
-            normalise_time(row['End']),
+            row["Date"],
             row['Rate of pay']
         ))
 
-    print(timesheet_data)
+    print(df.iloc[3, 2] + " " + df.iloc[4, 2], (timesheet_data))
 
 
 def check_timesheets(file_paths: list[str]):
