@@ -1,6 +1,15 @@
+import os
 import pandas as pd
 import datetime
 
+level_to_rate = {
+    "L1": 11.07,
+    "L2": 19.65,
+    "NQL2": 17.23,
+    "Enhanced L2": 22.44,
+    "Lower Enhanced L2": 11.90,
+    "LHC": 12.14,
+}
 
 def normalise_time(time_str: str) -> str:
     """
@@ -11,10 +20,10 @@ def normalise_time(time_str: str) -> str:
     return time_str
 
 
-def read_timesheet(file_path: str) -> list[tuple[str, str, str, str]]:
+def read_timesheet(file_path: str) -> dict[str, tuple[str, datetime.datetime, str]]:
     """
     Read a timesheet excel file and return a list of tuples of
-       (number of hours, start time, end time, rate).
+       (number of hours, date, rate).
     """
     
     # Read the excel file
@@ -34,7 +43,6 @@ def read_timesheet(file_path: str) -> list[tuple[str, str, str, str]]:
     # Remove all rows where the Date, Week day, start time, end time are Nan
     table_df.dropna(subset=['Date', 'Week', 'Start', 'End'], inplace=True)
     table_df.reset_index(drop=True, inplace=True)
-    print(table_df)
     
     # Create a tuple of (number of hours, start time, end time, rate)
     timesheet_data = []
@@ -42,17 +50,55 @@ def read_timesheet(file_path: str) -> list[tuple[str, str, str, str]]:
     for _, row in table_df.iterrows():
         location_hours = [row[loc] if pd.notna(row[loc]) else 0 for loc in location_list]
         timesheet_data.append((
-            sum(location_hours),
-            normalise_time(row['Start']),
-            normalise_time(row['End']),
+            str(float(sum(location_hours))),
+            row["Date"],
             row['Rate of pay']
         ))
+        
+    name = df.iloc[3, 3]
+    # print(name, (timesheet_data))
+    return {name: timesheet_data}
+    
+def read_sign_in_sheet(month: str, file_path: str) -> dict[str, tuple[str, datetime.datetime, str]]:
+    """
+    Read a sign in sheet excel file and return a list of tuples of
+       (number of hours, date, rate).
+    """
+    global level_to_rate
 
-    print(timesheet_data)
+    sign_df = pd.read_excel(file_path, month, header=0)
 
+    sign_in_sheet_data = {}
 
-def check_timesheets(file_paths: list[str]):
+    for _, row in sign_df.iterrows():
+        if not pd.isna(row['Name']) and row['Name'] != "Total Hours":
+            name = row['Name']
+            if name not in sign_in_sheet_data:
+                sign_in_sheet_data[name] = []
+            for col in sign_df.columns[3:]:
+                if not pd.isna(row[col]):
+                    sign_in_sheet_data[name].append((
+                        str(row[col]),
+                        col, 
+                        level_to_rate[row["Level"]]
+                    ))
+
+    # print(sign_in_sheet_data)
+    return sign_in_sheet_data
+
+def check_timesheets(timesheet_folder: str, sign_in_sheet_folder: str):
     """
     Read all timesheet excel files and print any discrepancies found with the sign in sheet.
     """
-    pass
+    sign_in_data = read_sign_in_sheet("July", os.path.join(sign_in_sheet_folder, "TestSheet.xlsx"))
+    for filename in os.listdir(timesheet_folder):
+        if filename.endswith(".xlsx"):
+            timesheet_data = read_timesheet(os.path.join(timesheet_folder, filename))
+            for name, data in timesheet_data.items():
+                if name in sign_in_data:
+                    if sign_in_data[name] == data:
+                        print(f"No discrepancies found for {name}.")
+                    else:
+                        print(f"Discrepancy found for {name}: {data} (timesheet) vs {sign_in_data[name]} (sign in)")
+                else:
+                    print(f"No sign in data found for {name}")

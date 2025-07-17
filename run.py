@@ -7,9 +7,9 @@ def main():
         print("Usage: python run.py")
         sys.exit(1)
     
-    from check_timesheets import read_timesheet
-    read_timesheet("examples/William.xlsx")
-    
+    from check_timesheets import check_timesheets
+    check_timesheets("timesheets", "sign_in")
+
 
 if __name__ == "__main__":
     main()
