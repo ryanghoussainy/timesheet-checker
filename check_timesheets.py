@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import datetime
 
@@ -7,7 +8,7 @@ level_to_rate = {
     "NQL2": 17.23,
     "Enhanced L2": 22.44,
     "Lower Enhanced L2": 11.90,
-    "LHC": 30.00,
+    "LHC": 12.14,
 }
 
 def normalise_time(time_str: str) -> str:
@@ -55,7 +56,7 @@ def read_timesheet(file_path: str) -> dict[str, tuple[str, datetime.datetime, st
         ))
         
     name = df.iloc[3, 3]
-    print(name, (timesheet_data))
+    # print(name, (timesheet_data))
     return {name: timesheet_data}
     
 def read_sign_in_sheet(month: str, file_path: str) -> dict[str, tuple[str, datetime.datetime, str]]:
@@ -82,11 +83,22 @@ def read_sign_in_sheet(month: str, file_path: str) -> dict[str, tuple[str, datet
                         level_to_rate[row["Level"]]
                     ))
 
-    print(sign_in_sheet_data)
+    # print(sign_in_sheet_data)
     return sign_in_sheet_data
 
-def check_timesheets(file_paths: list[str]):
+def check_timesheets(timesheet_folder: str, sign_in_sheet_folder: str):
     """
     Read all timesheet excel files and print any discrepancies found with the sign in sheet.
     """
-    pass
+    sign_in_data = read_sign_in_sheet("July", os.path.join(sign_in_sheet_folder, "TestSheet.xlsx"))
+    for filename in os.listdir(timesheet_folder):
+        if filename.endswith(".xlsx"):
+            timesheet_data = read_timesheet(os.path.join(timesheet_folder, filename))
+            for name, data in timesheet_data.items():
+                if name in sign_in_data:
+                    if sign_in_data[name] == data:
+                        print(f"No discrepancies found for {name}.")
+                    else:
+                        print(f"Discrepancy found for {name}: {data} (timesheet) vs {sign_in_data[name]} (sign in)")
+                else:
+                    print(f"No sign in data found for {name}")
