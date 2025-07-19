@@ -1,23 +1,7 @@
 import os
 import pandas as pd
 import datetime
-
-level_to_rate = {
-    "L1": 11.07,
-    "L2": 19.65,
-    "NQL2": 17.23,
-    "Enhanced L2": 22.44,
-    "Lower Enhanced L2": 11.90,
-    "LHC": 12.14,
-}
-
-def normalise_time(time_str: str) -> str:
-    """
-    Normalise time string to "HH:MM" format.
-    """
-    if isinstance(time_str, datetime.time):
-        return time_str.strftime("%H:%M")
-    return time_str
+from read_sign_in import read_sign_in_sheet
 
 
 def read_timesheet(file_path: str) -> dict[str, tuple[str, datetime.datetime, str]]:
@@ -56,65 +40,45 @@ def read_timesheet(file_path: str) -> dict[str, tuple[str, datetime.datetime, st
         ))
         
     name = df.iloc[3, 3]
-    # print(name, (timesheet_data))
-    return {name: timesheet_data}
     
-def read_sign_in_sheet(month: str, file_path: str) -> dict[str, tuple[str, datetime.datetime, str]]:
+    return name, timesheet_data
+
+    
+def check_timesheet(file_path: str, sign_in_data: dict[str, tuple[str, datetime.datetime, str]]):
     """
-    Read a sign in sheet excel file and return a list of tuples of
-       (number of hours, date, rate).
+    Check a single timesheet against the sign in data and print any discrepancies found.
     """
-    global level_to_rate
+    # Read the timesheet
+    name, data = read_timesheet(file_path)
 
-    sign_df = pd.read_excel(file_path, month, header=0)
+    # Check if the name exists in the sign in data
+    if name in sign_in_data:
+        
+        # Make sets for comparison to not modify the original data
+        data_set = set(data)
+        sign_in_set = set(sign_in_data[name])
 
-    sign_in_sheet_data = {}
+        # For each entry in the timesheet data, match and remove from the sign in data 
+        for entry in data:
+            if entry in sign_in_set:
+                sign_in_set.remove(entry)
+                data_set.remove(entry)
 
-    for _, row in sign_df.iterrows():
-        if not pd.isna(row['Name']) and row['Name'] != "Total Hours":
-            name = row['Name']
-            if name not in sign_in_sheet_data:
-                sign_in_sheet_data[name] = []
-            for col in sign_df.columns[3:]:
-                if not pd.isna(row[col]):
-                    sign_in_sheet_data[name].append((
-                        str(row[col]),
-                        col, 
-                        level_to_rate[row["Level"]]
-                    ))
-
-    # print(sign_in_sheet_data)
-    return sign_in_sheet_data
+        if len(data_set) == len(sign_in_set) == 0:
+            print(f"No discrepancies found for {name}.")
+        else:
+            print(f"Discrepancy found for {name}: {data_set} (timesheet) vs {sign_in_set} (sign in)")
+    else:
+        print(f"No sign in data found for {name}")
 
 def check_timesheets(timesheet_folder: str, sign_in_sheet_folder: str):
     """
     Read all timesheet excel files and print any discrepancies found with the sign in sheet.
     """
-    
     sign_in_data = read_sign_in_sheet("July", os.path.join(sign_in_sheet_folder, "TestSheet.xlsx"))
     
     for filename in os.listdir(timesheet_folder):
     
         if filename.endswith(".xlsx"):
-            timesheet_data = read_timesheet(os.path.join(timesheet_folder, filename))
-            
-            for name, data in timesheet_data.items():
-                
-                if name in sign_in_data:
-                    data_set = set(data)
-                    sign_in_set = set(sign_in_data[name])
-                    
-                    for entry in data:
-                        
-                        if entry in sign_in_set:
-                            sign_in_set.remove(entry)
-                            data_set.remove(entry)
-
-                    if len(data_set) == len(sign_in_set) == 0:
-                        print(f"No discrepancies found for {name}.")
-                    
-                    else:
-                        print(f"Discrepancy found for {name}: {data_set} (timesheet) vs {sign_in_set} (sign in)")
-               
-                else:
-                    print(f"No sign in data found for {name}")
+            file_path = os.path.join(timesheet_folder, filename)
+            check_timesheet(file_path, sign_in_data)
