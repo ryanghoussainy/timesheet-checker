@@ -90,15 +90,31 @@ def check_timesheets(timesheet_folder: str, sign_in_sheet_folder: str):
     """
     Read all timesheet excel files and print any discrepancies found with the sign in sheet.
     """
+    
     sign_in_data = read_sign_in_sheet("July", os.path.join(sign_in_sheet_folder, "TestSheet.xlsx"))
+    
     for filename in os.listdir(timesheet_folder):
+    
         if filename.endswith(".xlsx"):
             timesheet_data = read_timesheet(os.path.join(timesheet_folder, filename))
+            
             for name, data in timesheet_data.items():
+                
                 if name in sign_in_data:
-                    if sign_in_data[name] == data:
+                    data_set = set(data)
+                    sign_in_set = set(sign_in_data[name])
+                    
+                    for entry in data:
+                        
+                        if entry in sign_in_set:
+                            sign_in_set.remove(entry)
+                            data_set.remove(entry)
+
+                    if len(data_set) == len(sign_in_set) == 0:
                         print(f"No discrepancies found for {name}.")
+                    
                     else:
-                        print(f"Discrepancy found for {name}: {data} (timesheet) vs {sign_in_data[name]} (sign in)")
+                        print(f"Discrepancy found for {name}: {data_set} (timesheet) vs {sign_in_set} (sign in)")
+               
                 else:
                     print(f"No sign in data found for {name}")
