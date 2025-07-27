@@ -22,7 +22,7 @@ def read_sign_in_sheet(month: str, file_path: str) -> dict[str, tuple[str, datet
                 if not pd.isna(row[col]):
                     sign_in_sheet_data[name].append((
                         str(row[col]),
-                        col, 
+                        col.date().strftime('%d-%m-%Y'),
                         level_to_rate[row["Level"]]
                     ))
 

@@ -35,7 +35,7 @@ def read_timesheet(file_path: str) -> dict[str, tuple[str, datetime.datetime, st
         location_hours = [row[loc] if pd.notna(row[loc]) else 0 for loc in location_list]
         timesheet_data.append((
             str(float(sum(location_hours))),
-            row["Date"],
+            row["Date"].date().strftime('%d-%m-%Y'),
             row['Rate of pay']
         ))
         
@@ -58,16 +58,28 @@ def check_timesheet(file_path: str, sign_in_data: dict[str, tuple[str, datetime.
         data_set = set(data)
         sign_in_set = set(sign_in_data[name])
 
-        # For each entry in the timesheet data, match and remove from the sign in data 
+        # For each entry in the timesheet data, match and remove from the sign in data
+        print(f"\nChecking timesheet for {name}...")
         for entry in data:
             if entry in sign_in_set:
                 sign_in_set.remove(entry)
                 data_set.remove(entry)
-
-        if len(data_set) == len(sign_in_set) == 0:
-            print(f"No discrepancies found for {name}.")
+            else: 
+                print(f"Discrepancy found for {name} on {entry[1]}")
+        
+        remaining_entries = sorted(data_set, key=lambda x: x[1])
+        remaining_sign_in = sorted(sign_in_set, key=lambda x: x[1])
+        
+        if len(remaining_sign_in) != 0:
+            print("\n")
+            for i in range(len(remaining_entries)):
+                print(f"{name} claims to have worked for {remaining_entries[i][0]} hours on {remaining_entries[i][1]}, with a rate of {remaining_entries[i][2]}")
+                print(f"The sign in sheet shows {name} worked for {remaining_sign_in[i][0]} hours on {remaining_sign_in[i][1]}, with a rate of {remaining_sign_in[i][2]}")
+                print("\n")
         else:
-            print(f"Discrepancy found for {name}: {data_set} (timesheet) vs {sign_in_set} (sign in)")
+            print(f"All entries for {name} match between timesheet and sign in sheet.")
+                
+
     else:
         print(f"No sign in data found for {name}")
 
