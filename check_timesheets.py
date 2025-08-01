@@ -81,16 +81,3 @@ def check_timesheet(df, sign_in_data: dict[str, tuple[str, datetime.datetime, st
     else:
         print(f"No sign in data found for {name}")
 
-def check_timesheets(timesheet_file: str, sign_in_sheet_path: str):
-    """
-    Read all timesheet excel files and print any discrepancies found with the sign in sheet.
-    """
-    sign_in_data = read_sign_in_sheet("July", sign_in_sheet_path)
-    
-    with pd.ExcelFile(timesheet_file) as xls:
-        for sheet_name in xls.sheet_names:
-            df = pd.read_excel(xls, sheet_name=sheet_name)
-            if not df.empty:
-                check_timesheet(df, sign_in_data)
-            else:
-                print(f"Sheet {sheet_name} is empty.")    

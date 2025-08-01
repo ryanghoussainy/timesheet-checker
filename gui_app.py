@@ -2,6 +2,7 @@ __version__ = "1.0.0" # Major.Minor.Patch
 
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, scrolledtext
+from read_sign_in import read_sign_in_sheet
 import tkinterdnd2 as tkdnd
 import os
 import threading
@@ -10,9 +11,10 @@ import re
 from PIL import Image, ImageTk
 
 
-from check_timesheets import check_timesheets
+from check_timesheets import check_timesheet
 from amindefy import amindefy_timesheets
 from colours import *
+import pandas as pd
 
 class OutputCapture:
     """Context manager to capture print statements and user input"""
@@ -246,146 +248,34 @@ class TimesheetCheckerApp:
         self.output_text.delete(1.0, tk.END)
         self.output_text.config(state='disabled')
     
+    def wait_for_enter(self):
+        """Wait until the user presses Enter in the output terminal."""
+        # Create a variable to signal when Enter is pressed
+        self._enter_pressed = False
+
+        def on_key(event):
+            if event.keysym == "Return":
+                self._enter_pressed = True
+                # Remove the binding after Enter is pressed
+                self.output_text.unbind("<Key>")
+
+        # Enable the output_text widget to receive key events
+        self.output_text.config(state='normal')
+        self.output_text.focus_set()
+        self.output_text.bind("<Key>", on_key)
+
+        # Wait until Enter is pressed
+        while not self._enter_pressed:
+            self.output_text.update()
+        
+        # Restore output_text to disabled state
+        self.output_text.config(state='disabled')
+        """Wait until the user presses Enter in a popup dialog."""
+        result = {"pressed": False}
+
     def get_user_input(self, message=None):
-        # If message is provided directly, use it
-        if message:
-            result = self.show_match_confirmation_dialog(message)
-            return result if result else "exit"
-        
-        # Extract the prompt from the last few lines written to output
-        all_text = self.output_text.get(1.0, tk.END).strip()
-        lines = all_text.split('\n')
-        
-        # Look for match confirmation prompts
-        prompt = ""
-        swimmer_info = ""
-        
-        for line in reversed(lines):
-            clean_line = re.sub(r'\033\[\d+m', '', line).strip()
-            if "Is this the right match?" in clean_line:
-                prompt = clean_line
-                break
-            elif "->" in clean_line and "similarity score" in clean_line:
-                swimmer_info = clean_line
-                break
-        
-        # Show popup dialog for match confirmation
-        if prompt or swimmer_info:
-            result = self.show_match_confirmation_dialog(swimmer_info or prompt)
-            return result if result else "exit"
-        
-        # Fallback for any other input (shouldn't happen with current implementation)
-        return "n"
-
-    def show_match_confirmation_dialog(self, message):
-        """Show a custom dialog for match confirmation"""
-        # Extract info from the message for a cleaner dialog
-        if "->" in message:
-            # Parse the match info
-            match_info = re.sub(r'\033\[\d+m', '', message).strip()
-            dialog_message = f"Confirm match:\n\n{match_info}"
-        else:
-            dialog_message = message
-    
-        # Create custom dialog
-        dialog = tk.Toplevel(self.root)
-        dialog.title("Confirm Match")
-        dialog.resizable(False, False)
-        dialog.transient(self.root)
-        dialog.grab_set()  # Make dialog modal
-        
-        # Dialog dimensions
-        dialog_width = 400
-        dialog_height = 200
-        
-        # Force the parent window to update its geometry info
-        self.root.update_idletasks()
-        
-        # Now get accurate parent window information
-        parent_x = self.root.winfo_x()
-        parent_y = self.root.winfo_y()
-        parent_width = self.root.winfo_width()
-        parent_height = self.root.winfo_height()
-        
-        # Calculate centered position
-        x = parent_x + (parent_width - dialog_width) // 2
-        y = parent_y + (parent_height - dialog_height) // 2
-        
-        # Ensure dialog stays on screen
-        x = max(0, x)
-        y = max(0, y)
-        
-        # Set the position explicitly
-        dialog.geometry(f"{dialog_width}x{dialog_height}+{x}+{y}")
-    
-        # Message label
-        msg_label = tk.Label(
-            dialog,
-            text=dialog_message,
-            font=("Segoe UI", 11),
-            wraplength=350,
-            justify=tk.LEFT,
-            padx=20,
-            pady=20
-        )
-        msg_label.pack(expand=True)
-    
-        # Button frame
-        button_frame = tk.Frame(dialog)
-        button_frame.pack(pady=10)
-    
-        result = {"value": "exit"}
-    
-        def accept():
-            result["value"] = "y"
-            dialog.destroy()
-    
-        def deny():
-            result["value"] = "n"
-            dialog.destroy()
-
-        def on_close():
-            result["value"] = "exit"
-            dialog.destroy()
-
-        # Bind the close event
-        dialog.protocol("WM_DELETE_WINDOW", on_close)
-    
-        # Accept button
-        accept_btn = tk.Button(
-            button_frame,
-            text="Accept Match",
-            command=accept,
-            bg=BUTTON_ACCEPT_BG,
-            fg=BUTTON_ACCEPT_FG,
-            font=("Segoe UI", 10, "bold"),
-            padx=20,
-            pady=8
-        )
-        accept_btn.pack(side=tk.LEFT, padx=10)
-    
-        # Deny button
-        deny_btn = tk.Button(
-            button_frame,
-            text="Deny Match",
-            command=deny,
-            bg=BUTTON_DENY_BG,
-            fg=BUTTON_DENY_FG,
-            font=("Segoe UI", 10, "bold"),
-            padx=20,
-            pady=8
-        )
-        deny_btn.pack(side=tk.LEFT, padx=10)
-        
-        # Ensure dialog is visible and focused
-        dialog.deiconify()
-        dialog.lift()
-        dialog.focus_force()
-    
-        # Wait for dialog to close
-        dialog.wait_window()
-    
-        return result["value"]
+        self.wait_for_enter()
+        return "\n"
     
     def _write_to_output(self, text):
         self.output_text.config(state='normal')
@@ -637,10 +527,16 @@ class TimesheetCheckerApp:
         def process():
             try:
                 self.clear_output()
-                
                 with OutputCapture(self.output_text, self.get_user_input):
-                    check_timesheets(self.file_paths['amindefied_excel'], self.file_paths['sign_in_sheet'])
-                
+                    with pd.ExcelFile(self.file_paths['amindefied_excel']) as xls:
+                        sign_in_data = read_sign_in_sheet("July", self.file_paths['sign_in_sheet'])
+                        for sheet_name in xls.sheet_names:
+                            df = pd.read_excel(xls, sheet_name=sheet_name)
+                            if not df.empty:
+                                check_timesheet(df, sign_in_data)
+                                self.get_user_input("Press Enter to continue...")
+                            else:
+                                print(f"Sheet {sheet_name} is empty.")
                 self._write_to_output(f"\n✅ TIMESHEET CHECK COMPLETED!\n")
             except Exception as e:
                 self._write_to_output(f"\n❌ ERROR: {str(e)}\n")
