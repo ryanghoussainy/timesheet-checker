@@ -4,14 +4,11 @@ import datetime
 from read_sign_in import read_sign_in_sheet
 
 
-def read_timesheet(file_path: str) -> dict[str, tuple[str, datetime.datetime, str]]:
+def read_timesheet(df) -> dict[str, tuple[str, datetime.datetime, str]]:
     """
     Read a timesheet excel file and return a list of tuples of
        (number of hours, date, rate).
     """
-    
-    # Read the excel file
-    df = pd.read_excel(file_path, header=0)
     
     # Get the row number whose first column is 'Date'
     header_row_index = df[df.iloc[:, 0] == 'Date'].index[0]
@@ -43,13 +40,13 @@ def read_timesheet(file_path: str) -> dict[str, tuple[str, datetime.datetime, st
     
     return name, timesheet_data
 
-    
-def check_timesheet(file_path: str, sign_in_data: dict[str, tuple[str, datetime.datetime, str]]):
+
+def check_timesheet(df, sign_in_data: dict[str, tuple[str, datetime.datetime, str]]):
     """
     Check a single timesheet against the sign in data and print any discrepancies found.
     """
     # Read the timesheet
-    name, data = read_timesheet(file_path)
+    name, data = read_timesheet(df)
 
     # Check if the name exists in the sign in data
     if name in sign_in_data:
@@ -83,14 +80,16 @@ def check_timesheet(file_path: str, sign_in_data: dict[str, tuple[str, datetime.
     else:
         print(f"No sign in data found for {name}")
 
-def check_timesheets(timesheet_folder: str, sign_in_sheet_folder: str):
+def check_timesheets(timesheet_file: str, sign_in_sheet_path: str):
     """
     Read all timesheet excel files and print any discrepancies found with the sign in sheet.
     """
-    sign_in_data = read_sign_in_sheet("July", os.path.join(sign_in_sheet_folder, "TestSheet.xlsx"))
+    sign_in_data = read_sign_in_sheet("July", sign_in_sheet_path)
     
-    for filename in os.listdir(timesheet_folder):
-    
-        if filename.endswith(".xlsx"):
-            file_path = os.path.join(timesheet_folder, filename)
-            check_timesheet(file_path, sign_in_data)
+    with pd.ExcelFile(timesheet_file) as xls:
+        for sheet_name in xls.sheet_names:
+            df = pd.read_excel(xls, sheet_name=sheet_name)
+            if not df.empty:
+                check_timesheet(df, sign_in_data)
+            else:
+                print(f"Sheet {sheet_name} is empty.")    
