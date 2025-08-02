@@ -329,8 +329,8 @@ class TimesheetCheckerApp:
         instructions.pack(pady=20)
         
         # File input areas
-        self.create_file_input(frame, "First Excel File", 'amindefied_excel', [('Excel files', '*.xls *.xlsx')])
-        self.create_file_input(frame, "Second Excel File", 'sign_in_sheet', [('Excel files', '*.xls *.xlsx')])
+        self.create_file_input(frame, "Timesheets Excel File", 'amindefied_excel', [('Excel files', '*.xls *.xlsx')])
+        self.create_file_input(frame, "Sign In Sheet", 'sign_in_sheet', [('Excel files', '*.xls *.xlsx')])
         
         # Process button
         process_btn = ttk.Button(
