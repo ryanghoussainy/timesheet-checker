@@ -76,6 +76,8 @@ def check_timesheet(df, sign_in_data: dict[str, tuple[str, datetime.datetime, st
                 print(f"The sign in sheet shows {name} worked for {remaining_sign_in[i][0]} hours on {remaining_sign_in[i][1]}, with a rate of {remaining_sign_in[i][2]}")
         else:
             print(f"All entries for {name} match between timesheet and sign in sheet.")
+        print("\n")
+        print("Press Enter to continue...")
                 
 
     else:
