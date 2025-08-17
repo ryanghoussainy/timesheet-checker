@@ -9,12 +9,14 @@ import threading
 import sys
 import re
 from PIL import Image, ImageTk
-
+import pandas as pd
+import json
 
 from check_timesheets import check_timesheet
 from amindefy import amindefy_timesheets
 from colours import *
-import pandas as pd
+
+RATES_FILE = "rates.json"
 
 class OutputCapture:
     """Context manager to capture print statements and user input"""
@@ -182,7 +184,7 @@ class TimesheetCheckerApp:
         
         # Tab 1: Folder Processing
         self.create_amindefy_tab()
-        
+        self.create_rates_tab()  # <-- Add this line for the new tab
         # Tab 2: Excel Comparison
         self.create_check_timesheets_tab()
         
@@ -313,6 +315,78 @@ class TimesheetCheckerApp:
         )
         process_btn.pack(pady=30)
     
+    def create_rates_tab(self):
+        frame = tk.Frame(self.notebook, bg=NOTEBOOK_TAB_BACKGROUND)
+        self.notebook.add(frame, text="2. Rates")
+
+        instructions = tk.Label(
+            frame,
+            text="Review and edit rates for each level. If any are incorrect, please change them and click Save.",
+            font=("Segoe UI", 12),
+            bg=LABEL_BACKGROUND,
+            fg=LABEL_FOREGROUND,
+            wraplength=400
+        )
+        instructions.pack(pady=20)
+
+        self.rates = self.load_rates()
+        self.rate_vars = {}
+
+        table_frame = tk.Frame(frame, bg=CONTAINER_BACKGROUND)
+        table_frame.pack(padx=10, pady=10)
+
+        # Table header
+        tk.Label(table_frame, text="Level", font=("Arial", 11, "bold"), bg=CONTAINER_BACKGROUND).grid(row=0, column=0, padx=10, pady=5)
+        tk.Label(table_frame, text="Rate (£/hr)", font=("Arial", 11, "bold"), bg=CONTAINER_BACKGROUND).grid(row=0, column=1, padx=10, pady=5)
+
+        for i, (level, rate) in enumerate(self.rates.items(), start=1):
+            tk.Label(table_frame, text=level, font=("Arial", 11), bg=CONTAINER_BACKGROUND).grid(row=i, column=0, padx=10, pady=5, sticky="w")
+            var = tk.StringVar(value=str(rate))
+            entry = tk.Entry(table_frame, textvariable=var, width=10, font=("Arial", 11))
+            entry.grid(row=i, column=1, padx=10, pady=5)
+            self.rate_vars[level] = var
+
+        save_btn = ttk.Button(
+            frame,
+            text="Save",
+            command=self.on_save_rates,
+            style="Modern.TButton",
+        )
+        save_btn.pack(pady=20)
+
+    def load_rates(self):
+        """Load rates from file"""
+        try:
+            with open(RATES_FILE, "r") as f:
+                rates = json.load(f)
+                # Convert keys to str and values to float
+                return {str(k): float(v) for k, v in rates.items()}
+        except Exception:
+            levels = ["L1", "L2", "NQL2", "Enhanced L2", "Lower Enhanced L2", "LHC"]
+            return {level: 0 for level in levels}
+
+    def save_rates(self):
+        """Save current rates to file."""
+        try:
+            with open(RATES_FILE, "w") as f:
+                json.dump(self.rates, f, indent=2)
+            messagebox.showinfo("Saved", "Rates saved successfully!")
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not save rates: {e}")
+
+    def on_save_rates(self):
+        # Validate and save rates
+        new_rates = {}
+        for level, var in self.rate_vars.items():
+            try:
+                value = float(var.get())
+                new_rates[level] = value
+            except ValueError:
+                messagebox.showerror("Error", f"Invalid rate for {level}: {var.get()}")
+                return
+        self.rates = new_rates
+        self.save_rates()
+
     def create_check_timesheets_tab(self):
         frame = tk.Frame(self.notebook, bg=NOTEBOOK_TAB_BACKGROUND)
         self.notebook.add(frame, text="2. Check Timesheets")
@@ -529,7 +603,7 @@ class TimesheetCheckerApp:
                 self.clear_output()
                 with OutputCapture(self.output_text, self.get_user_input):
                     with pd.ExcelFile(self.file_paths['amindefied_excel']) as xls:
-                        sign_in_data = read_sign_in_sheet("July", self.file_paths['sign_in_sheet'])
+                        sign_in_data = read_sign_in_sheet("July", self.file_paths['sign_in_sheet'], self.load_rates())
                         for sheet_name in xls.sheet_names:
                             df = pd.read_excel(xls, sheet_name=sheet_name)
                             if not df.empty:

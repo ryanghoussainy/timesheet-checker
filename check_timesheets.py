@@ -1,7 +1,5 @@
-import os
 import pandas as pd
 import datetime
-from read_sign_in import read_sign_in_sheet
 
 
 def read_timesheet(df) -> dict[str, tuple[str, datetime.datetime, str]]:

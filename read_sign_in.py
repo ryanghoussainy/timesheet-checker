@@ -1,14 +1,11 @@
 import pandas as pd
 import datetime
-from level_to_rate import level_to_rate
 
-def read_sign_in_sheet(month: str, file_path: str) -> dict[str, tuple[str, datetime.datetime, str]]:
+def read_sign_in_sheet(month: str, file_path: str, rates: dict[str, int]) -> dict[str, tuple[str, datetime.datetime, str]]:
     """
     Read a sign in sheet excel file and return a list of tuples of
        (number of hours, date, rate).
     """
-    global level_to_rate
-
     sign_df = pd.read_excel(file_path, month, header=0)
 
     sign_in_sheet_data = {}
@@ -23,8 +20,7 @@ def read_sign_in_sheet(month: str, file_path: str) -> dict[str, tuple[str, datet
                     sign_in_sheet_data[name].append((
                         str(row[col]),
                         col.date().strftime('%d-%m-%Y'),
-                        level_to_rate[row["Level"]]
+                        rates[row["Level"]]
                     ))
 
-    # print(sign_in_sheet_data)
     return sign_in_sheet_data
