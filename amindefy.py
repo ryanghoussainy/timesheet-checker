@@ -53,4 +53,4 @@ def amindefy_timesheets(timesheet_folder: str, output_file: str):
     # Save the output workbook
     output_wb.save(output_file)
     output_wb.close()
-    print(f"All timesheets with formatting have been combined into {output_file}.")
+    print(f"All timesheets have been combined into {output_file}.")

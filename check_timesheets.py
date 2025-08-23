@@ -25,7 +25,7 @@ def read_timesheet(df) -> dict[str, tuple[str, datetime.datetime, str]]:
     
     # Create a tuple of (number of hours, start time, end time, rate)
     timesheet_data = []
-    location_list = ["Masters", "NP", "Chiswick", "Sh. Bush", "Acton", "Water", "Horsenden ", "St Helen's", "Disability", "Squad", "Admin", "Safeguarding "]
+    location_list = ["Acton hours", "Admin hours", "Safeguarding hours", "GALA day rate", "House Event day rate"]
     for _, row in table_df.iterrows():
         location_hours = [row[loc] if pd.notna(row[loc]) else 0 for loc in location_list]
         timesheet_data.append((
@@ -33,9 +33,9 @@ def read_timesheet(df) -> dict[str, tuple[str, datetime.datetime, str]]:
             row["Date"].date().strftime('%d-%m-%Y'),
             row['Rate of pay']
         ))
-        
-    name = df.iloc[3, 3]
-    
+
+    name = (df.iloc[2, 3] + " " + df.iloc[2, 4])
+
     return name, timesheet_data
 
 
