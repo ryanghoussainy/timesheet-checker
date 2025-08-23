@@ -20,7 +20,7 @@ def read_timesheet(df) -> dict[str, tuple[str, datetime.datetime, str]]:
     table_df = table_df[1:]
 
     # Remove all rows where the Date, Week day, start time, end time are Nan
-    table_df.dropna(subset=['Date', 'Week', 'Start', 'End'], inplace=True)
+    table_df.dropna(subset=['Date', 'Week day', 'Start Time', 'End Time'], inplace=True)
     table_df.reset_index(drop=True, inplace=True)
     
     # Create a tuple of (number of hours, start time, end time, rate)
