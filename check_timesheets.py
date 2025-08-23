@@ -27,14 +27,14 @@ def read_timesheet(df) -> dict[str, tuple[str, datetime.datetime, str]]:
     timesheet_data = []
     location_list = ["Acton hours", "Admin hours", "Safeguarding hours", "GALA day rate", "House Event day rate"]
     for _, row in table_df.iterrows():
-        location_hours = [row[loc] if pd.notna(row[loc]) else 0 for loc in location_list]
+        location_hours = [float(row[loc]) if pd.notna(row[loc]) else 0 for loc in location_list]
         timesheet_data.append((
-            str(float(sum(location_hours))),
+            str(sum(location_hours)),
             row["Date"].date().strftime('%d-%m-%Y'),
-            row['Rate of pay']
+            row['Rate of pay (see table below)']
         ))
 
-    name = (df.iloc[2, 3] + " " + df.iloc[2, 4])
+    name = (str(df.iloc[3, 2]) + " " + str(df.iloc[4, 2]))
 
     return name, timesheet_data
 
