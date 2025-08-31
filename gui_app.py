@@ -517,7 +517,7 @@ class TimesheetCheckerApp:
         
         # File path display
         path_var = tk.StringVar()
-        path_var.set("No location selected (will use default: timesheets_excel.xlsx)")
+        path_var.set("No location selected (will use default: all_timesheets.xlsx)")
         path_label = tk.Label(button_frame, textvariable=path_var, bg=CONTAINER_BACKGROUND, fg=LABEL_TEXT_DARK, wraplength=300)
         path_label.pack(side=tk.LEFT, anchor=tk.W, pady=(0, 10))
         
@@ -584,7 +584,7 @@ class TimesheetCheckerApp:
                 with OutputCapture(self.output_text, self.get_user_input):
                     print("Processing folder...")
                     print(f"Folder: {self.file_paths['folder_path']}")
-                    amindefy_timesheets(self.file_paths['folder_path'], self.file_paths.get('output_file', 'timesheets_excel.xlsx'))
+                    amindefy_timesheets(self.file_paths['folder_path'], self.file_paths.get('output_file', 'all_timesheets.xlsx'))
                 
                 self._write_to_output(f"\n✅ FOLDER PROCESSED SUCCESSFULLY!\n")
             except Exception as e:
