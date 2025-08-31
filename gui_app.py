@@ -362,7 +362,7 @@ class TimesheetCheckerApp:
                 # Convert keys to str and values to float
                 return {str(k): float(v) for k, v in rates.items()}
         except Exception:
-            levels = ["L1", "L2", "NQL2", "Enhanced L2", "Lower Enhanced L2", "LHC"]
+            levels = ["L1", "L2", "NQL2", "Enhanced L2", "Lower Enhanced L2", "LHC", "Safeguarding", "Admin", "Gala Full Day", "Gala Half Day"]
             return {level: 0 for level in levels}
 
     def save_rates(self):

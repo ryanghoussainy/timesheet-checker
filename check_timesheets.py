@@ -28,6 +28,7 @@ def read_timesheet(df) -> dict[str, tuple[str, datetime.datetime, str]]:
     location_list = ["Acton hours", "Admin hours", "Safeguarding hours", "GALA day rate", "House Event day rate"]
     for _, row in table_df.iterrows():
         location_hours = [float(row[loc]) if pd.notna(row[loc]) else 0 for loc in location_list]
+        # TODO: error if multiple location hours are not 0
         timesheet_data.append((
             str(sum(location_hours)),
             row["Date"].date().strftime('%d-%m-%Y'),
@@ -65,7 +66,7 @@ def check_timesheet(df, sign_in_data: dict[str, tuple[str, datetime.datetime, st
         remaining_entries = sorted(data_set, key=lambda x: x[1])
         remaining_sign_in = sorted(sign_in_set, key=lambda x: x[1])
         
-        if len(remaining_sign_in) != 0:
+        if len(remaining_entries) != 0 or len(remaining_sign_in) != 0:
             print("\n")
             for i in range(len(remaining_entries)):
                 print(f"{name} claims to have worked for {remaining_entries[i][0]} hours on {remaining_entries[i][1]}, with a rate of {remaining_entries[i][2]}")
