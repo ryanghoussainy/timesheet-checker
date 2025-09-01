@@ -2,17 +2,15 @@ __version__ = "1.0.0" # Major.Minor.Patch
 
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, scrolledtext
-from read_sign_in import read_sign_in_sheet
 import tkinterdnd2 as tkdnd
 import os
 import threading
 import sys
 import re
 from PIL import Image, ImageTk
-import pandas as pd
 import json
 
-from check_timesheets import check_timesheet
+from check_timesheets import check_timesheets
 from amindefy import amindefy_timesheets
 from colours import *
 
@@ -586,7 +584,7 @@ class TimesheetCheckerApp:
                     print(f"Folder: {self.file_paths['folder_path']}")
                     amindefy_timesheets(self.file_paths['folder_path'], self.file_paths.get('output_file', 'all_timesheets.xlsx'))
                 
-                self._write_to_output(f"\n✅ FOLDER PROCESSED SUCCESSFULLY!\n")
+                self._write_to_output(f"\n✅ TIMESHEETS PROCESSED SUCCESSFULLY!\n")
             except Exception as e:
                 self._write_to_output(f"\n❌ ERROR: {str(e)}\n")
         
@@ -602,15 +600,11 @@ class TimesheetCheckerApp:
             try:
                 self.clear_output()
                 with OutputCapture(self.output_text, self.get_user_input):
-                    with pd.ExcelFile(self.file_paths['amindefied_excel']) as xls:
-                        sign_in_data = read_sign_in_sheet("July", self.file_paths['sign_in_sheet'], self.load_rates())
-                        for sheet_name in xls.sheet_names:
-                            df = pd.read_excel(xls, sheet_name=sheet_name)
-                            if not df.empty:
-                                check_timesheet(df, sign_in_data)
-                                self.get_user_input("Press Enter to continue...")
-                            else:
-                                print(f"Sheet {sheet_name} is empty.")
+                    check_timesheets(
+                        self.file_paths['amindefied_excel'],
+                        self.file_paths['sign_in_sheet'],
+                        self.load_rates()
+                    )
                 self._write_to_output(f"\n✅ TIMESHEET CHECK COMPLETED!\n")
             except Exception as e:
                 self._write_to_output(f"\n❌ ERROR: {str(e)}\n")

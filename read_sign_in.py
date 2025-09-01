@@ -19,7 +19,7 @@ def read_sign_in_sheet(month: str, file_path: str, rates: dict[str, int]) -> dic
                 if not pd.isna(row[col]):
                     sign_in_sheet_data[name].append((
                         str(row[col]),
-                        col.date().strftime('%d-%m-%Y'),
+                        col.date(),
                         rates[row["Level"]]
                     ))
 

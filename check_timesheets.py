@@ -1,6 +1,9 @@
 import pandas as pd
 import datetime
 
+from read_sign_in import read_sign_in_sheet
+from discrepancies import print_discrepancies, EMPTY_TIMESHEET, INVALID_NAME, TIMESHEET_EXTRA_ENTRY, SIGN_IN_EXTRA_ENTRY
+
 
 def read_timesheet(df) -> dict[str, tuple[str, datetime.datetime, str]]:
     """
@@ -31,25 +34,48 @@ def read_timesheet(df) -> dict[str, tuple[str, datetime.datetime, str]]:
         # TODO: error if multiple location hours are not 0
         timesheet_data.append((
             str(sum(location_hours)),
-            row["Date"].date().strftime('%d-%m-%Y'),
+            row["Date"].date(),
             row['Rate of pay (see table below)']
         ))
 
-    name = (str(df.iloc[3, 2]) + " " + str(df.iloc[4, 2]))
+    first_name = str(df.iloc[3, 2]).strip()
+    last_name = str(df.iloc[4, 2]).strip()
+    name = first_name + " " + last_name
 
     return name, timesheet_data
 
 
-def check_timesheet(df, sign_in_data: dict[str, tuple[str, datetime.datetime, str]]):
+def check_timesheets(amindefied_excel_path, sign_in_sheet_path, rates):
+    # Check for discrepancies
+    discrepancies = []
+
+    # Read sign in sheet
+    sign_in_data = read_sign_in_sheet("July", sign_in_sheet_path, rates)
+
+    with pd.ExcelFile(amindefied_excel_path) as xls:
+        for sheet_name in xls.sheet_names:
+            # Read individual timesheet
+            df = pd.read_excel(xls, sheet_name=sheet_name)
+            if df.empty:
+                discrepancies.append((EMPTY_TIMESHEET, {"sheet name": sheet_name}))
+
+            check_timesheet(df, sign_in_data, discrepancies)
+    
+    print_discrepancies(discrepancies)
+
+
+def check_timesheet(df, sign_in_data: dict[str, tuple[str, datetime.datetime, str]], discrepancies):
     """
     Check a single timesheet against the sign in data and print any discrepancies found.
     """
     # Read the timesheet
     name, data = read_timesheet(df)
 
-    # Check if the name exists in the sign in data
-    if name in sign_in_data:
-        
+    # Check if timesheet name is correct
+    if name not in sign_in_data:
+        sign_in_names = list(sign_in_data.keys())
+        discrepancies.append((INVALID_NAME, {"name": name, "sign in names": sign_in_names}))
+    else:
         # Make sets for comparison to not modify the original data
         data_set = set(data)
         sign_in_set = set(sign_in_data[name])
@@ -57,28 +83,14 @@ def check_timesheet(df, sign_in_data: dict[str, tuple[str, datetime.datetime, st
         # For each entry in the timesheet data, match and remove from the sign in data
         print(f"\nChecking timesheet for {name}...")
         for entry in data:
-            if entry in sign_in_set:
+            if entry not in sign_in_set:
+                discrepancies.append((TIMESHEET_EXTRA_ENTRY, {"name": name, "entry": entry}))
+            else: 
+                # Successfully matched entry
                 sign_in_set.remove(entry)
                 data_set.remove(entry)
-            else: 
-                print(f"Discrepancy found for {name} on {entry[1]}")
         
-        remaining_entries = sorted(data_set, key=lambda x: x[1])
-        remaining_sign_in = sorted(sign_in_set, key=lambda x: x[1])
-        
-        if len(remaining_entries) != 0 or len(remaining_sign_in) != 0:
-            print("\n")
-            for i in range(len(remaining_entries)):
-                print(f"{name} claims to have worked for {remaining_entries[i][0]} hours on {remaining_entries[i][1]}, with a rate of {remaining_entries[i][2]}")
-            print("\n")
-            for i in range(len(remaining_sign_in)): 
-                print(f"The sign in sheet shows {name} worked for {remaining_sign_in[i][0]} hours on {remaining_sign_in[i][1]}, with a rate of {remaining_sign_in[i][2]}")
-        else:
-            print(f"All entries for {name} match between timesheet and sign in sheet.")
-        print("\n")
-        print("Press Enter to continue...")
-                
-
-    else:
-        print(f"No sign in data found for {name}")
-
+        # Check for remaining entries
+        remaining_sign_in_entries = sorted(sign_in_set, key=lambda x: x[1])
+        for entry in remaining_sign_in_entries:
+            discrepancies.append((SIGN_IN_EXTRA_ENTRY, {"name": name, "entry": entry}))
