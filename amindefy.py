@@ -1,6 +1,6 @@
 import os
 from openpyxl import Workbook, load_workbook
-from datetime import datetime
+from copy import copy
 
 def amindefy_timesheets(timesheet_folder: str, output_file: str):
     """
@@ -33,13 +33,13 @@ def amindefy_timesheets(timesheet_folder: str, output_file: str):
                     
                     # Copy formatting
                     if cell.has_style:
-                        new_cell.font = cell.font.copy()
-                        new_cell.border = cell.border.copy()
-                        new_cell.fill = cell.fill.copy()
+                        new_cell.font = copy(cell.font)
+                        new_cell.border = copy(cell.border)
+                        new_cell.fill = copy(cell.fill)
                         new_cell.number_format = cell.number_format
-                        new_cell.protection = cell.protection.copy()
-                        new_cell.alignment = cell.alignment.copy()
-            
+                        new_cell.protection = copy(cell.protection)
+                        new_cell.alignment = copy(cell.alignment)
+
             # Copy column dimensions
             for col_letter, col_dimension in source_ws.column_dimensions.items():
                 output_ws.column_dimensions[col_letter].width = col_dimension.width
