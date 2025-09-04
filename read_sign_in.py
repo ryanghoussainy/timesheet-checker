@@ -11,7 +11,7 @@ def read_sign_in_sheet(month: str, file_path: str, rates: dict[str, int]) -> dic
     sign_in_sheet_data = {}
 
     for _, row in sign_df.iterrows():
-        if not pd.isna(row['Name']) and row['Name'] != "Total Hours":
+        if not pd.isna(row['Level']) and row['Level'] != "LHC":
             name = row['Name']
             if name not in sign_in_sheet_data:
                 sign_in_sheet_data[name] = set()
