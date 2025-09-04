@@ -61,10 +61,15 @@ def check_timesheets(amindefied_excel_path, sign_in_sheet_path, rates):
 
             check_timesheet(df, sign_in_data, discrepancies)
     
+    # Check for remaining entries in sign in data
+    for name, entries in sign_in_data.items():
+        for entry in entries:
+            discrepancies.append((SIGN_IN_EXTRA_ENTRY, {"name": name, "entry": entry}))
+    
     print_discrepancies(discrepancies)
 
 
-def check_timesheet(df, sign_in_data: dict[str, tuple[str, datetime.datetime, str]], discrepancies):
+def check_timesheet(df, sign_in_data: dict[str, set[tuple[str, datetime.datetime, str]]], discrepancies):
     """
     Check a single timesheet against the sign in data and print any discrepancies found.
     """
@@ -78,7 +83,7 @@ def check_timesheet(df, sign_in_data: dict[str, tuple[str, datetime.datetime, st
     else:
         # Make sets for comparison to not modify the original data
         data_set = set(data)
-        sign_in_set = set(sign_in_data[name])
+        sign_in_set = sign_in_data[name]
 
         # For each entry in the timesheet data, match and remove from the sign in data
         print(f"\nChecking timesheet for {name}...")
@@ -89,8 +94,3 @@ def check_timesheet(df, sign_in_data: dict[str, tuple[str, datetime.datetime, st
                 # Successfully matched entry
                 sign_in_set.remove(entry)
                 data_set.remove(entry)
-        
-        # Check for remaining entries
-        remaining_sign_in_entries = sorted(sign_in_set, key=lambda x: x[1])
-        for entry in remaining_sign_in_entries:
-            discrepancies.append((SIGN_IN_EXTRA_ENTRY, {"name": name, "entry": entry}))
