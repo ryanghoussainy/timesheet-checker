@@ -45,12 +45,12 @@ def read_timesheet(df) -> dict[str, tuple[str, datetime.datetime, str]]:
     return name, timesheet_data
 
 
-def check_timesheets(amindefied_excel_path, sign_in_sheet_path, rates):
+def check_timesheets(amindefied_excel_path, sign_in_sheet_path, rates, month):
     # Check for discrepancies
     discrepancies = []
 
     # Read sign in sheet
-    sign_in_data = read_sign_in_sheet("July", sign_in_sheet_path, rates)
+    sign_in_data = read_sign_in_sheet(month, sign_in_sheet_path, rates)
 
     with pd.ExcelFile(amindefied_excel_path) as xls:
         for sheet_name in xls.sheet_names:

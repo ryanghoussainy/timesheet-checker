@@ -389,6 +389,37 @@ class TimesheetCheckerApp:
         frame = tk.Frame(self.notebook, bg=NOTEBOOK_TAB_BACKGROUND)
         self.notebook.add(frame, text="2. Check Timesheets")
         
+        # Month dropdown menu
+        months = [
+            "September", "October", "November", "December", "January",
+            "February", "March", "April", "May", "June", "July"
+        ]
+        self.month_var = tk.StringVar(value=months[0])
+        self.month = months[0]  # Default month
+
+        def on_month_change(*args):
+            self.month = self.month_var.get()
+
+        self.month_var.trace_add("write", on_month_change)
+
+        month_label = tk.Label(
+            frame,
+            text="Select Month:",
+            font=("Segoe UI", 11, "bold"),
+            bg=LABEL_BACKGROUND,
+            fg=LABEL_FOREGROUND
+        )
+        month_label.pack(pady=(15, 5))
+
+        month_dropdown = ttk.Combobox(
+            frame,
+            textvariable=self.month_var,
+            values=months,
+            state="readonly",
+            font=("Segoe UI", 11)
+        )
+        month_dropdown.pack(pady=(0, 15))
+
         # Instructions
         instructions = tk.Label(
             frame,
@@ -603,7 +634,8 @@ class TimesheetCheckerApp:
                     check_timesheets(
                         self.file_paths['amindefied_excel'],
                         self.file_paths['sign_in_sheet'],
-                        self.load_rates()
+                        self.load_rates(),
+                        self.month
                     )
                 self._write_to_output(f"\n✅ TIMESHEET CHECK COMPLETED!\n")
             except Exception as e:
