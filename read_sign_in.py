@@ -2,7 +2,7 @@ import pandas as pd
 from entry import Entry
 from collections import defaultdict
 
-def read_sign_in_sheet(month: str, file_path: str, rates: dict[str, float]) -> dict[str, set[Entry]]:
+def read_sign_in_sheet(month: str, file_path: str, rates: dict[str, float], rates_after: dict[str, float] | None, rate_change_date: str | None) -> dict[str, set[Entry]]:
     """
     Read a sign in sheet excel file and return a dictionnary from name to set of entries
     """
@@ -21,11 +21,17 @@ def read_sign_in_sheet(month: str, file_path: str, rates: dict[str, float]) -> d
             # Skip empty cells
             if pd.isna(row[col]):
                 continue
+                
+            # Determine which rate to use based on the date and rate change date
+            if rate_change_date and rates_after and col.date() >= pd.to_datetime(rate_change_date, format="%d/%m/%Y").date():
+                rate = rates_after[row['Level']]
+            else:
+                rate = rates[row['Level']]
             
             entry = Entry(
                 date=col.date(),
                 hours=float(row[col]),
-                rate=rates[row['Level']],
+                rate=rate,
             )
             sign_in_sheet_data[name].add(entry)
 

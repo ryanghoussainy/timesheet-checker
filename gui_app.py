@@ -327,22 +327,78 @@ class TimesheetCheckerApp:
         )
         instructions.pack(pady=20)
 
-        self.rates = self.load_rates()
+        # Rate change checkbox and date (UI only)
+        self.rate_change_var = tk.BooleanVar(value=False)
+        self.rate_change_date_var = tk.StringVar(value="")
+
+        rate_change_frame = tk.Frame(frame, bg=CONTAINER_BACKGROUND)
+        rate_change_frame.pack(padx=10, pady=5, anchor="w")
+
+        rate_change_check = tk.Checkbutton(
+            rate_change_frame,
+            text="Rate change",
+            variable=self.rate_change_var,
+            bg=CONTAINER_BACKGROUND,
+            command=self.toggle_rate_change,
+        )
+        rate_change_check.pack(side=tk.LEFT, padx=(0, 10))
+
+        tk.Label(rate_change_frame, text="Change date (DD/MM/YYYY):", bg=CONTAINER_BACKGROUND).pack(side=tk.LEFT)
+        self.rate_change_date_entry = tk.Entry(rate_change_frame, textvariable=self.rate_change_date_var, state="disabled")
+        self.rate_change_date_entry.pack(side=tk.LEFT, padx=(5, 0))
+
+        # Load nested rates format (rates, rates_after, date)
+        rates, rates_after, rate_change_date = self.load_rates()
+        self.rates = rates
+        # if rates_after is None, keep internal copy for editing but hide the table UI
+        self.rates_after = {k: float(v) for k, v in rates.items()} if rates_after is None else {k: float(v) for k, v in rates_after.items()}
+
+        # set date UI if present
+        if rate_change_date:
+            self.rate_change_date_var.set(rate_change_date)
+            self.rate_change_var.set(True)
+            self.rate_change_date_entry.config(state='normal')
+        else:
+            self.rate_change_var.set(False)
+            self.rate_change_date_entry.config(state='disabled')
+
         self.rate_vars = {}
+        self.rate_vars_after = {}
 
-        table_frame = tk.Frame(frame, bg=CONTAINER_BACKGROUND)
-        table_frame.pack(padx=10, pady=10)
+        # Parent container holding two table frames side-by-side
+        tables_container = tk.Frame(frame, bg=CONTAINER_BACKGROUND)
+        tables_container.pack(padx=10, pady=10, fill=tk.X)
 
-        # Table header
-        tk.Label(table_frame, text="Level", font=("Arial", 11, "bold"), bg=CONTAINER_BACKGROUND).grid(row=0, column=0, padx=10, pady=5)
-        tk.Label(table_frame, text="Rate (£/hr)", font=("Arial", 11, "bold"), bg=CONTAINER_BACKGROUND).grid(row=0, column=1, padx=10, pady=5)
+        # Left table (current rates)
+        self.table_frame = tk.Frame(tables_container, bg=CONTAINER_BACKGROUND)
+        self.table_frame.pack(side=tk.LEFT, padx=(0, 20))
+
+        tk.Label(self.table_frame, text="Level", font=("Arial", 11, "bold"), bg=CONTAINER_BACKGROUND).grid(row=0, column=0, padx=10, pady=5)
+        tk.Label(self.table_frame, text="Rate (£/hr)", font=("Arial", 11, "bold"), bg=CONTAINER_BACKGROUND).grid(row=0, column=1, padx=10, pady=5)
 
         for i, (level, rate) in enumerate(self.rates.items(), start=1):
-            tk.Label(table_frame, text=level, font=("Arial", 11), bg=CONTAINER_BACKGROUND).grid(row=i, column=0, padx=10, pady=5, sticky="w")
-            var = tk.StringVar(value=str(rate))
-            entry = tk.Entry(table_frame, textvariable=var, width=10, font=("Arial", 11))
+            tk.Label(self.table_frame, text=level, font=("Arial", 11), bg=CONTAINER_BACKGROUND).grid(row=i, column=0, padx=10, pady=5, sticky="w")
+            var = tk.StringVar(value=f"{float(rate):.2f}")
+            entry = tk.Entry(self.table_frame, textvariable=var, width=10, font=("Arial", 11))
             entry.grid(row=i, column=1, padx=10, pady=5)
             self.rate_vars[level] = var
+
+        # Right table (rates after change) — create but may be hidden depending on rates_after
+        self.table_frame_after = tk.Frame(tables_container, bg=CONTAINER_BACKGROUND)
+        tk.Label(self.table_frame_after, text="Level", font=("Arial", 11, "bold"), bg=CONTAINER_BACKGROUND).grid(row=0, column=0, padx=10, pady=5)
+        tk.Label(self.table_frame_after, text="Rate (£/hr) (after)", font=("Arial", 11, "bold"), bg=CONTAINER_BACKGROUND).grid(row=0, column=1, padx=10, pady=5)
+
+        for i, level in enumerate(self.rates.keys(), start=1):
+            tk.Label(self.table_frame_after, text=level, font=("Arial", 11), bg=CONTAINER_BACKGROUND).grid(row=i, column=0, padx=10, pady=5, sticky="w")
+            after_value = self.rates_after.get(level, 0.0)
+            var_after = tk.StringVar(value=f"{float(after_value):.2f}")
+            entry_after = tk.Entry(self.table_frame_after, textvariable=var_after, width=10, font=("Arial", 11))
+            entry_after.grid(row=i, column=1, padx=10, pady=5)
+            self.rate_vars_after[level] = var_after
+
+        # Show after-table only if rates_after was present in file (not None) or checkbox is set
+        if rates_after is not None:
+            self.table_frame_after.pack(side=tk.LEFT)
 
         save_btn = ttk.Button(
             frame,
@@ -351,30 +407,89 @@ class TimesheetCheckerApp:
             style="Modern.TButton",
         )
         save_btn.pack(pady=20)
+    
+    def toggle_rate_change(self):
+        """Show/hide the after-table. If turning on and rates_after was None, copy current rates into it."""
+        if self.rate_change_var.get():
+            # ensure internal rates_after exists and populate from current rates if it was None
+            if getattr(self, "rates_after", None) is None:
+                self.rates_after = {k: float(v) for k, v in self.rates.items()}
+                # update UI entries to match
+                for lvl, var in self.rate_vars_after.items():
+                    var.set(f"{self.rates_after.get(lvl, 0.0):.2f}")
+            self.table_frame_after.pack(side=tk.LEFT, padx=(0, 0))
+            self.rate_change_date_entry.config(state='normal')
+        else:
+            # Hide it and mark internal as None (so save writes null)
+            self.table_frame_after.pack_forget()
+            self.rate_change_date_entry.config(state='disabled')
+            self.rates_after = None
 
     def load_rates(self):
-        """Load rates from file"""
+        """
+        Load nested rates JSON:
+        { "rate_change_date": "DD/MM/YYYY" | null,
+            "rates": {...},
+            "rates_after": {...} | null
+        }
+        Returns (rates_dict, rates_after_dict_or_None, rate_change_date_or_None)
+        """
         try:
             with open(RATES_FILE, "r") as f:
-                rates = json.load(f)
-                # Convert keys to str and values to float
-                return {str(k): float(v) for k, v in rates.items()}
+                data = json.load(f)
+            if not isinstance(data, dict):
+                raise ValueError("rates.json must contain an object")
+            rates = {str(k): float(v) for k, v in data.get("rates", {}).items()}
+            rates_after_raw = data.get("rates_after", None)
+            rates_after = None if rates_after_raw is None else {str(k): float(v) for k, v in rates_after_raw.items()}
+            rate_change_date = data.get("rate_change_date", None)
+            # If file contained only a flat dict (older format), treat that as rates (back-compat)
+            if not rates:
+                # check if top-level keys look like rate levels (flat mapping)
+                flat_candidate = {str(k): float(v) for k, v in data.items() if k not in ("rates_after", "rate_change_date")}
+                if flat_candidate:
+                    return flat_candidate, None, None
+            return rates, rates_after, rate_change_date
         except Exception:
-            levels = ["L1", "L2", "NQL2", "Enhanced L2", "Lower Enhanced L2", "Safeguarding", "Admin", "Gala Full Day", "Gala Half Day"]
-            return {level: 0 for level in levels}
+            levels = [
+                "L1", "L2", "NQL2", "Enhanced L2", "Lower Enhanced L2",
+                "Safeguarding", "Admin", "Gala Full Day", "Gala Half Day"
+            ]
+            return {level: 0.0 for level in levels}, None, None
 
     def save_rates(self):
-        """Save current rates to file."""
+        """
+        Save nested structure:
+        { "rate_change_date": <str or null>, "rates": {...}, "rates_after": {...} or null }
+        If rate_change checkbox is unchecked, rates_after will be saved as null.
+        """
         try:
+            # choose which rates_after to persist: either dict or None
+            rates_to_save = {k: float(v) for k, v in self.rates.items()}
+            if getattr(self, "rate_change_var", None) and self.rate_change_var.get() and getattr(self, "rates_after", None) is not None:
+                rates_after_to_save = {k: float(v) for k, v in self.rates_after.items()}
+            else:
+                rates_after_to_save = None
+
+            data = {
+                "rate_change_date": self.rate_change_date_var.get() if (getattr(self, "rate_change_var", None) and self.rate_change_var.get()) else None,
+                "rates": rates_to_save,
+                "rates_after": rates_after_to_save,
+            }
+
             with open(RATES_FILE, "w") as f:
-                json.dump(self.rates, f, indent=2)
+                json.dump(data, f, indent=2)
+
             messagebox.showinfo("Saved", "Rates saved successfully!")
         except Exception as e:
             messagebox.showerror("Error", f"Could not save rates: {e}")
 
     def on_save_rates(self):
-        # Validate and save rates
+        """Validate both tables and then persist nested JSON (rates + optional rates_after + date)."""
         new_rates = {}
+        new_rates_after = None
+
+        # Validate left table (current rates)
         for level, var in self.rate_vars.items():
             try:
                 value = float(var.get())
@@ -382,7 +497,23 @@ class TimesheetCheckerApp:
             except ValueError:
                 messagebox.showerror("Error", f"Invalid rate for {level}: {var.get()}")
                 return
+
+        # Validate right table only if visible (rate change checked)
+        if getattr(self, 'rate_change_var', None) and self.rate_change_var.get():
+            new_rates_after = {}
+            for level, var in self.rate_vars_after.items():
+                try:
+                    value = float(var.get())
+                    new_rates_after[level] = value
+                except ValueError:
+                    messagebox.showerror("Error", f"Invalid rate for {level} (after change): {var.get()}")
+                    return
+
+        # assign to instance
         self.rates = new_rates
+        self.rates_after = new_rates_after
+
+        # Save nested structure (save_rates writes rates_after as null if None)
         self.save_rates()
 
     def create_check_timesheets_tab(self):
@@ -626,23 +757,27 @@ class TimesheetCheckerApp:
         if not self.file_paths['amindefied_excel'] or not self.file_paths['sign_in_sheet']:
             messagebox.showerror("Error", "Please select both Excel files")
             return
-        
+
         def process():
             try:
                 self.clear_output()
                 with OutputCapture(self.output_text, self.get_user_input):
+                    # load nested rates triple and pass all three to check_timesheets
+                    rates, rates_after, rate_change_date = self.load_rates()
                     check_timesheets(
                         self.file_paths['amindefied_excel'],
                         self.file_paths['sign_in_sheet'],
-                        self.load_rates(),
+                        rates,
+                        rates_after,
+                        rate_change_date,
                         self.month
                     )
                 self._write_to_output(f"\n✅ TIMESHEET CHECK COMPLETED!\n")
             except Exception as e:
                 self._write_to_output(f"\n❌ ERROR: {str(e)}\n")
-        
-        # Run in separate thread to prevent GUI freezing
+
         threading.Thread(target=process, daemon=True).start()
+
 
 def main():
     root = tkdnd.TkinterDnD.Tk()
