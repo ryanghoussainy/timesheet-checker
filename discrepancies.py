@@ -33,17 +33,17 @@ def print_discrepancies(discrepancies):
                 entry = details["entry"]
 
                 # Unpack entry
-                hours, date_time, rate = entry
+                date, hours, rate = entry
 
-                print_colour(RED, f"Extra entry in timesheet for {name}: {hours} hours on {date_time} at {rate}/hour")
-            
+                print_colour(RED, f"Extra entry in timesheet for {name}: {hours} hours on {date} at {rate}/hour")
+
             elif discrepancy_type == SIGN_IN_EXTRA_ENTRY:
                 name = details["name"]
                 entry = details["entry"]
 
                 # Unpack entry
-                hours, date_time, rate = entry
+                date, hours, rate = entry
 
-                print_colour(RED, f"Extra entry in sign in sheet for {name}: {hours} hours on {date_time} at {rate}/hour")
+                print_colour(RED, f"Extra entry in sign in sheet for {name}: {hours} hours on {date} at {rate}/hour")
     else:
         print_colour(GREEN, "No mismatches found.")
