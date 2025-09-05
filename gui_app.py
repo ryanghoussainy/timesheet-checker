@@ -183,8 +183,11 @@ class TimesheetCheckerApp:
         
         # Tab 1: Folder Processing
         self.create_amindefy_tab()
-        self.create_rates_tab()  # <-- Add this line for the new tab
-        # Tab 2: Excel Comparison
+
+        # Tab 2: Rates
+        self.create_rates_tab()
+
+        # Tab 3: Check Timesheets
         self.create_check_timesheets_tab()
         
         # Output panel on right side
@@ -525,6 +528,17 @@ class TimesheetCheckerApp:
     def create_check_timesheets_tab(self):
         frame = tk.Frame(self.notebook, bg=NOTEBOOK_TAB_BACKGROUND)
         self.notebook.add(frame, text="2. Check Timesheets")
+
+        # Instructions
+        instructions = tk.Label(
+            frame,
+            text="Compare the timesheets with the sign in sheet.",
+            font=("Segoe UI", 12),
+            bg=LABEL_BACKGROUND,
+            fg=LABEL_FOREGROUND,
+            wraplength=400
+        )
+        instructions.pack(pady=20)
         
         # Month dropdown menu
         months = [
@@ -559,17 +573,6 @@ class TimesheetCheckerApp:
             font=("Segoe UI", 11)
         )
         month_dropdown.pack(pady=(0, 15))
-
-        # Instructions
-        instructions = tk.Label(
-            frame,
-            text="Compare the timesheets with the sign in sheet.",
-            font=("Segoe UI", 12),
-            bg=LABEL_BACKGROUND,
-            fg=LABEL_FOREGROUND,
-            wraplength=400
-        )
-        instructions.pack(pady=20)
         
         # File input areas
         self.create_file_input(frame, "Timesheets Excel File", 'amindefied_excel', [('Excel files', '*.xls *.xlsx')])
