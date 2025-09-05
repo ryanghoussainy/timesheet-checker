@@ -9,6 +9,7 @@ import sys
 import re
 from PIL import Image, ImageTk
 import json
+from datetime import datetime
 
 from check_timesheets import check_timesheets
 from amindefy import amindefy_timesheets
@@ -530,8 +531,11 @@ class TimesheetCheckerApp:
             "September", "October", "November", "December", "January",
             "February", "March", "April", "May", "June", "July"
         ]
-        self.month_var = tk.StringVar(value=months[0])
-        self.month = months[0]  # Default month
+
+        # Set current month as default value (not hardcoded)
+        current_month = datetime.now().strftime("%B")
+        self.month_var = tk.StringVar(value=current_month)
+        self.month = current_month
 
         def on_month_change(*args):
             self.month = self.month_var.get()
