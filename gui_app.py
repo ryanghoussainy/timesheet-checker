@@ -500,6 +500,11 @@ class TimesheetCheckerApp:
 
         # Validate right table only if visible (rate change checked)
         if getattr(self, 'rate_change_var', None) and self.rate_change_var.get():
+
+            if not self.rate_change_date_var.get():
+                messagebox.showerror("Error", "Please enter a valid rate change date (DD/MM/YYYY).")
+                return
+
             new_rates_after = {}
             for level, var in self.rate_vars_after.items():
                 try:
