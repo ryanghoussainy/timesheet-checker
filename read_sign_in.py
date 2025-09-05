@@ -23,8 +23,14 @@ def read_sign_in_sheet(month: str, file_path: str, rates: dict[str, float], rate
                 continue
                 
             # Determine which rate to use based on the date and rate change date
-            if rate_change_date and rates_after and col.date() >= pd.to_datetime(rate_change_date, format="%d/%m/%Y").date():
-                rate = rates_after[row['Level']]
+            if rate_change_date and rates_after:
+                try:
+                    if col.date() >= pd.to_datetime(rate_change_date, format="%d/%m/%Y").date():
+                        rate = rates_after[row['Level']]
+                    else:
+                        rate = rates[row['Level']]
+                except ValueError:
+                    raise ValueError(f"Rate change date {rate_change_date} is in invalid format. It must be in DD/MM/YYYY format.")
             else:
                 rate = rates[row['Level']]
             
