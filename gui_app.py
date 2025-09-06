@@ -14,8 +14,20 @@ from datetime import datetime
 from check_timesheets import check_timesheets
 from amindefy import amindefy_timesheets
 from colours import *
+from printing import RED, YELLOW, GREEN, RESET
 
 RATES_FILE = "rates.json"
+
+RATE_LEVELS = [
+    "L1", "L2", "NQL2", "Enhanced L2", "Lower Enhanced L2",
+    "Safeguarding", "Admin", "Gala Full Day", "Gala Half Day"
+]
+
+# The months considered for timesheets. The swimming year is September-July
+MONTHS = [
+    "September", "October", "November", "December", "January",
+    "February", "March", "April", "May", "June", "July"
+]
 
 class OutputCapture:
     """Context manager to capture print statements and user input"""
@@ -75,13 +87,13 @@ class OutputCapture:
                     self.output_widget.insert(tk.END, part)
             else:  # colour code part
                 colour_code = int(part)
-                if colour_code == 91:  # Red
+                if colour_code == RED:
                     current_colour = "red"
-                elif colour_code == 93:  # Yellow
+                elif colour_code == YELLOW:
                     current_colour = "yellow"
-                elif colour_code == 92:  # Green
+                elif colour_code == GREEN:
                     current_colour = "green"
-                elif colour_code == 0:  # Reset
+                elif colour_code == RESET:
                     current_colour = None
         
     def flush(self):
@@ -455,11 +467,7 @@ class TimesheetCheckerApp:
                     return flat_candidate, None, None
             return rates, rates_after, rate_change_date
         except Exception:
-            levels = [
-                "L1", "L2", "NQL2", "Enhanced L2", "Lower Enhanced L2",
-                "Safeguarding", "Admin", "Gala Full Day", "Gala Half Day"
-            ]
-            return {level: 0.0 for level in levels}, None, None
+            return {level: 0.0 for level in RATE_LEVELS}, None, None
 
     def save_rates(self):
         """
@@ -541,12 +549,6 @@ class TimesheetCheckerApp:
         instructions.pack(pady=20)
         
         # Month dropdown menu
-        months = [
-            "September", "October", "November", "December", "January",
-            "February", "March", "April", "May", "June", "July"
-        ]
-
-        # Set current month as default value (not hardcoded)
         current_month = datetime.now().strftime("%B")
         self.month_var = tk.StringVar(value=current_month)
         self.month = current_month
@@ -568,7 +570,7 @@ class TimesheetCheckerApp:
         month_dropdown = ttk.Combobox(
             frame,
             textvariable=self.month_var,
-            values=months,
+            values=MONTHS,
             state="readonly",
             font=("Segoe UI", 11)
         )

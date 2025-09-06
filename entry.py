@@ -13,6 +13,3 @@ class Entry:
 
     def __hash__(self):
         return hash((self.date, self.hours, self.rate))
-    
-    def __iter__(self):
-        return iter((self.date, self.hours, self.rate))

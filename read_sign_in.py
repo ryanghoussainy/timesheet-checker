@@ -2,6 +2,9 @@ import pandas as pd
 from entry import Entry
 from collections import defaultdict
 
+NAME_COL = "Name"
+LEVEL_COL = "Level"
+
 def read_sign_in_sheet(month: str, file_path: str, rates: dict[str, float], rates_after: dict[str, float] | None, rate_change_date: str | None) -> dict[str, set[Entry]]:
     """
     Read a sign in sheet excel file and return a dictionnary from name to set of entries
@@ -12,10 +15,10 @@ def read_sign_in_sheet(month: str, file_path: str, rates: dict[str, float], rate
 
     for _, row in sign_df.iterrows():
         # Skip rows below the table and LHC rows
-        if pd.isna(row['Level']) or row['Level'] == "LHC":
+        if pd.isna(row[LEVEL_COL]) or row[LEVEL_COL] == "LHC":
             continue
-    
-        name = row['Name']
+
+        name = row[NAME_COL].strip()
 
         for col in sign_df.columns[3:]:
             # Skip empty cells
@@ -26,14 +29,14 @@ def read_sign_in_sheet(month: str, file_path: str, rates: dict[str, float], rate
             if rate_change_date and rates_after:
                 try:
                     if col.date() >= pd.to_datetime(rate_change_date, format="%d/%m/%Y").date():
-                        rate = rates_after[row['Level']]
+                        rate = rates_after[row[LEVEL_COL]]
                     else:
-                        rate = rates[row['Level']]
+                        rate = rates[row[LEVEL_COL]]
                 except ValueError:
                     raise ValueError(f"Rate change date {rate_change_date} is in invalid format. It must be in DD/MM/YYYY format.")
             else:
-                rate = rates[row['Level']]
-            
+                rate = rates[row[LEVEL_COL]]
+
             entry = Entry(
                 date=col.date(),
                 hours=float(row[col]),

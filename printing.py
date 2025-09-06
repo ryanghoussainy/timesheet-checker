@@ -1,6 +1,7 @@
 RED = 91
 YELLOW = 93
 GREEN = 92
+RESET = 0
 
 def print_colour(colour: int, text: str, end: str = "\n") -> None:
     '''
