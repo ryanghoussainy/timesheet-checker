@@ -8,7 +8,7 @@ class Entry:
     
     def __eq__(self, other):
         if not isinstance(other, Entry):
-            return NotImplemented
+            raise NotImplementedError("Can only compare Entry with another Entry")
         return (self.date, self.hours, self.rate) == (other.date, other.hours, other.rate)
 
     def __hash__(self):

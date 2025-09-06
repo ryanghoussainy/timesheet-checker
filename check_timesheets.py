@@ -3,6 +3,7 @@ import pandas as pd
 from read_sign_in import read_sign_in_sheet
 from discrepancies import print_discrepancies, EMPTY_TIMESHEET, INVALID_NAME, TIMESHEET_EXTRA_ENTRY, SIGN_IN_EXTRA_ENTRY
 from entry import Entry
+from discrepancies import EmptyTimesheet, InvalidName, TimesheetExtraEntry, SignInExtraEntry
 
 
 DATE_COL = "Date"
@@ -73,15 +74,15 @@ def check_timesheets(
             # Read individual timesheet
             df = pd.read_excel(xls, sheet_name=sheet_name)
             if df.empty:
-                discrepancies.append((EMPTY_TIMESHEET, {"sheet name": sheet_name}))
+                discrepancies.append(EmptyTimesheet(sheet_name=sheet_name))
 
             check_timesheet(df, sign_in_data, discrepancies)
     
     # Check for remaining entries in sign in data
     for name, entries in sign_in_data.items():
         for entry in entries:
-            discrepancies.append((SIGN_IN_EXTRA_ENTRY, {"name": name, "entry": entry}))
-    
+            discrepancies.append(SignInExtraEntry(name=name, entry=entry))
+
     print_discrepancies(discrepancies)
 
 
@@ -95,7 +96,7 @@ def check_timesheet(df, sign_in_data: dict[str, set[Entry]], discrepancies):
     # Check if timesheet name is correct
     if name not in sign_in_data:
         sign_in_names = list(sign_in_data.keys())
-        discrepancies.append((INVALID_NAME, {"name": name, "sign in names": sign_in_names}))
+        discrepancies.append(InvalidName(name=name, sign_in_names=sign_in_names))
     else:
         # Make sets for comparison to not modify the original data
         timesheet_set = set(timesheet_entries)
@@ -105,7 +106,7 @@ def check_timesheet(df, sign_in_data: dict[str, set[Entry]], discrepancies):
         print(f"\nChecking timesheet for {name}...")
         for entry in timesheet_entries:
             if entry not in sign_in_set:
-                discrepancies.append((TIMESHEET_EXTRA_ENTRY, {"name": name, "entry": entry}))
+                discrepancies.append(TimesheetExtraEntry(name=name, entry=entry))
             else:
                 # Successfully matched entry
                 sign_in_set.remove(entry)
