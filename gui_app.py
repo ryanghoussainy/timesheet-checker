@@ -306,7 +306,7 @@ class TimesheetCheckerApp:
         # Instructions
         instructions = tk.Label(
             frame,
-            text="Combine all timesheets in a folder into a single Excel file.",
+            text="Combine all timesheets into a single Excel file.",
             font=("Segoe UI", 12),
             bg=LABEL_BACKGROUND,
             fg=LABEL_FOREGROUND,
@@ -335,7 +335,7 @@ class TimesheetCheckerApp:
 
         instructions = tk.Label(
             frame,
-            text="Review and edit rates for each level. If any are incorrect, please change them and click Save.",
+            text="Review and edit rates for each level. Remember to SAVE.",
             font=("Segoe UI", 12),
             bg=LABEL_BACKGROUND,
             fg=LABEL_FOREGROUND,
@@ -540,7 +540,7 @@ class TimesheetCheckerApp:
         # Instructions
         instructions = tk.Label(
             frame,
-            text="Compare the timesheets with the sign in sheet.",
+            text="Check the timesheets against the sign in sheet.",
             font=("Segoe UI", 12),
             bg=LABEL_BACKGROUND,
             fg=LABEL_FOREGROUND,
