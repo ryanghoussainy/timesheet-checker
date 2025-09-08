@@ -7,3 +7,6 @@ __pycache__/
 
 # Excel files
 *.xlsx
+
+# Word files
+*.docx
