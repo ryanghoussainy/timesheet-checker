@@ -1,9 +1,4 @@
-from printing import print_colour, RED, YELLOW, GREEN
-
-EMPTY_TIMESHEET = 0
-INVALID_NAME = 1
-TIMESHEET_EXTRA_ENTRY = 2
-SIGN_IN_EXTRA_ENTRY = 3
+from printing import print_colour, GREEN
 
 
 def print_discrepancies(discrepancies):

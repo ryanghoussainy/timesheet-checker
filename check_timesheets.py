@@ -1,7 +1,7 @@
 import pandas as pd
 
 from read_sign_in import read_sign_in_sheet
-from discrepancies import print_discrepancies, EMPTY_TIMESHEET, INVALID_NAME, TIMESHEET_EXTRA_ENTRY, SIGN_IN_EXTRA_ENTRY
+from discrepancies import print_discrepancies
 from entry import Entry
 from discrepancies import EmptyTimesheet, InvalidName, TimesheetExtraEntry, SignInExtraEntry
 
