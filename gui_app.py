@@ -16,7 +16,8 @@ from amindefy import amindefy_timesheets
 from colours import *
 from printing import RED, YELLOW, GREEN, RESET
 
-RATES_FILE = "rates.json"
+# Get different path depending on Windows vs Mac
+RATES_FILE = os.path.join(os.path.expanduser("~"), "AppData", "Local", "AutoTimesheetChecker", "rates.json")
 
 RATE_LEVELS = [
     "L1", "L2", "NQL2", "Enhanced L2", "Lower Enhanced L2",
@@ -488,6 +489,9 @@ class TimesheetCheckerApp:
                 "rates": rates_to_save,
                 "rates_after": rates_after_to_save,
             }
+
+            # Create intermediate directories if they don't exist
+            os.makedirs(os.path.dirname(RATES_FILE), exist_ok=True)
 
             with open(RATES_FILE, "w") as f:
                 json.dump(data, f, indent=2)
