@@ -10,3 +10,6 @@ __pycache__/
 
 # Word files
 *.docx
+
+# virtual environment
+venv/
