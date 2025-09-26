@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, scrolledtext
 from tkmacosx import Button
 import os
+import platform
 import threading
 import sys
 import re
@@ -17,7 +18,16 @@ from colours import *
 from printing import RED, YELLOW, GREEN, RESET
 
 # Get different path depending on Windows vs Mac
-RATES_FILE = os.path.join(os.path.expanduser("~"), "AppData", "Local", "AutoTimesheetChecker", "rates.json")
+def get_rates_file_path():
+    system = platform.system()
+    if system == "Windows":
+        return os.path.join(os.path.expanduser("~"), "AppData", "Local", "AutoTimesheetChecker", "rates.json")
+    elif system == "Darwin":
+        return os.path.join(os.path.expanduser("~"), "Library", "Application Support", "AutoTimesheetChecker", "rates.json")
+    else:
+        raise NotImplementedError(f"Unsupported OS: {system}")
+
+RATES_FILE = get_rates_file_path()
 
 RATE_LEVELS = [
     "L1", "L2", "NQL2", "Enhanced L2", "Lower Enhanced L2",
