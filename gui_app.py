@@ -2,6 +2,7 @@ __version__ = "1.0.0" # Major.Minor.Patch
 
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, scrolledtext
+from tkmacosx import Button
 import os
 import threading
 import sys
@@ -209,13 +210,6 @@ class TimesheetCheckerApp:
         # Configure modern ttk styles
         style = ttk.Style()
         
-        # Configure modern button style
-        style.configure(
-            'Modern.TButton',
-            background=CONTAINER_BACKGROUND,
-            font=('Segoe UI', 12),
-        )
-        
         # Configure modern frame style
         style.configure(
             'Modern.TFrame',
@@ -225,9 +219,7 @@ class TimesheetCheckerApp:
         
         # Configure modern notebook style
         style.configure(
-            'Modern.TNotebook',
-            background=NOTEBOOK_BACKGROUND,
-            borderwidth=0
+            'Modern.TNotebook'
         )
         style.configure(
             'Modern.TNotebook.Tab',
@@ -308,8 +300,7 @@ class TimesheetCheckerApp:
             frame,
             text="Combine all timesheets into a single Excel file.",
             font=("Segoe UI", 12),
-            bg=LABEL_BACKGROUND,
-            fg=LABEL_FOREGROUND,
+            bg=NOTEBOOK_TAB_BACKGROUND,
             wraplength=400
         )
         instructions.pack(pady=20)
@@ -321,11 +312,12 @@ class TimesheetCheckerApp:
         self.create_output_file_input(frame, "Output Excel File", 'output_file', [('Excel files', '*.xlsx')])
         
         # Process button
-        process_btn = ttk.Button(
+        process_btn = Button(
             frame,
             text="Create Amindefied Excel File",
             command=self.run_amindefy,
-            style="Modern.TButton",
+            highlightbackground=NOTEBOOK_TAB_BACKGROUND,
+            focusthickness=0,
         )
         process_btn.pack(pady=30)
     
@@ -337,8 +329,7 @@ class TimesheetCheckerApp:
             frame,
             text="Review and edit rates for each level. Remember to SAVE.",
             font=("Segoe UI", 12),
-            bg=LABEL_BACKGROUND,
-            fg=LABEL_FOREGROUND,
+            bg=NOTEBOOK_TAB_BACKGROUND,
             wraplength=400
         )
         instructions.pack(pady=20)
@@ -347,19 +338,19 @@ class TimesheetCheckerApp:
         self.rate_change_var = tk.BooleanVar(value=False)
         self.rate_change_date_var = tk.StringVar(value="")
 
-        rate_change_frame = tk.Frame(frame, bg=CONTAINER_BACKGROUND)
+        rate_change_frame = tk.Frame(frame)
         rate_change_frame.pack(padx=10, pady=5, anchor="w")
 
         rate_change_check = tk.Checkbutton(
             rate_change_frame,
             text="Rate change",
             variable=self.rate_change_var,
-            bg=CONTAINER_BACKGROUND,
             command=self.toggle_rate_change,
+            activeforeground=LABEL_FOREGROUND,
         )
         rate_change_check.pack(side=tk.LEFT, padx=(0, 10))
 
-        tk.Label(rate_change_frame, text="Change date (DD/MM/YYYY):", bg=CONTAINER_BACKGROUND).pack(side=tk.LEFT)
+        tk.Label(rate_change_frame, text="Change date (DD/MM/YYYY):").pack(side=tk.LEFT)
         self.rate_change_date_entry = tk.Entry(rate_change_frame, textvariable=self.rate_change_date_var, state="disabled")
         self.rate_change_date_entry.pack(side=tk.LEFT, padx=(5, 0))
 
@@ -382,30 +373,30 @@ class TimesheetCheckerApp:
         self.rate_vars_after = {}
 
         # Parent container holding two table frames side-by-side
-        tables_container = tk.Frame(frame, bg=CONTAINER_BACKGROUND)
+        tables_container = tk.Frame(frame)
         tables_container.pack(padx=10, pady=10, fill=tk.X)
 
         # Left table (current rates)
-        self.table_frame = tk.Frame(tables_container, bg=CONTAINER_BACKGROUND)
+        self.table_frame = tk.Frame(tables_container)
         self.table_frame.pack(side=tk.LEFT, padx=(0, 20))
 
-        tk.Label(self.table_frame, text="Level", font=("Arial", 11, "bold"), bg=CONTAINER_BACKGROUND).grid(row=0, column=0, padx=10, pady=5)
-        tk.Label(self.table_frame, text="Rate (£/hr)", font=("Arial", 11, "bold"), bg=CONTAINER_BACKGROUND).grid(row=0, column=1, padx=10, pady=5)
+        tk.Label(self.table_frame, text="Level", font=("Arial", 11, "bold")).grid(row=0, column=0, padx=10, pady=5)
+        tk.Label(self.table_frame, text="Rate (£/hr)", font=("Arial", 11, "bold")).grid(row=0, column=1, padx=10, pady=5)
 
         for i, (level, rate) in enumerate(self.rates.items(), start=1):
-            tk.Label(self.table_frame, text=level, font=("Arial", 11), bg=CONTAINER_BACKGROUND).grid(row=i, column=0, padx=10, pady=5, sticky="w")
+            tk.Label(self.table_frame, text=level, font=("Arial", 11)).grid(row=i, column=0, padx=10, pady=5, sticky="w")
             var = tk.StringVar(value=f"{float(rate):.2f}")
             entry = tk.Entry(self.table_frame, textvariable=var, width=10, font=("Arial", 11))
             entry.grid(row=i, column=1, padx=10, pady=5)
             self.rate_vars[level] = var
 
         # Right table (rates after change) — create but may be hidden depending on rates_after
-        self.table_frame_after = tk.Frame(tables_container, bg=CONTAINER_BACKGROUND)
-        tk.Label(self.table_frame_after, text="Level", font=("Arial", 11, "bold"), bg=CONTAINER_BACKGROUND).grid(row=0, column=0, padx=10, pady=5)
-        tk.Label(self.table_frame_after, text="Rate (£/hr) (after)", font=("Arial", 11, "bold"), bg=CONTAINER_BACKGROUND).grid(row=0, column=1, padx=10, pady=5)
+        self.table_frame_after = tk.Frame(tables_container)
+        tk.Label(self.table_frame_after, text="Level", font=("Arial", 11, "bold")).grid(row=0, column=0, padx=10, pady=5)
+        tk.Label(self.table_frame_after, text="Rate (£/hr) (after)", font=("Arial", 11, "bold")).grid(row=0, column=1, padx=10, pady=5)
 
         for i, level in enumerate(self.rates.keys(), start=1):
-            tk.Label(self.table_frame_after, text=level, font=("Arial", 11), bg=CONTAINER_BACKGROUND).grid(row=i, column=0, padx=10, pady=5, sticky="w")
+            tk.Label(self.table_frame_after, text=level, font=("Arial", 11)).grid(row=i, column=0, padx=10, pady=5, sticky="w")
             after_value = self.rates_after.get(level, 0.0)
             var_after = tk.StringVar(value=f"{float(after_value):.2f}")
             entry_after = tk.Entry(self.table_frame_after, textvariable=var_after, width=10, font=("Arial", 11))
@@ -416,13 +407,14 @@ class TimesheetCheckerApp:
         if rates_after is not None:
             self.table_frame_after.pack(side=tk.LEFT)
 
-        save_btn = ttk.Button(
+        save_btn = Button(
             frame,
             text="Save",
             command=self.on_save_rates,
-            style="Modern.TButton",
+            highlightbackground=NOTEBOOK_TAB_BACKGROUND,
+            focusthickness=0,
         )
-        save_btn.pack(pady=20)
+        save_btn.pack(pady=10)
     
     def toggle_rate_change(self):
         """Show/hide the after-table. If turning on and rates_after was None, copy current rates into it."""
@@ -545,8 +537,7 @@ class TimesheetCheckerApp:
             frame,
             text="Check the timesheets against the sign in sheet.",
             font=("Segoe UI", 12),
-            bg=LABEL_BACKGROUND,
-            fg=LABEL_FOREGROUND,
+            bg=NOTEBOOK_TAB_BACKGROUND,
             wraplength=400
         )
         instructions.pack(pady=20)
@@ -565,7 +556,6 @@ class TimesheetCheckerApp:
             frame,
             text="Select Month:",
             font=("Segoe UI", 11, "bold"),
-            bg=LABEL_BACKGROUND,
             fg=LABEL_FOREGROUND
         )
         month_label.pack(pady=(15, 5))
@@ -584,35 +574,37 @@ class TimesheetCheckerApp:
         self.create_file_input(frame, "Sign In Sheet", 'sign_in_sheet', [('Excel files', '*.xls *.xlsx')])
         
         # Process button
-        process_btn = ttk.Button(
+        process_btn = Button(
             frame,
             text="Check Timesheets",
             command=self.run_check_timesheets,
-            style="Modern.TButton",
+            highlightbackground=NOTEBOOK_TAB_BACKGROUND,
+            focusthickness=0,
         )
         process_btn.pack(pady=30)
     
     def create_folder_input(self, parent, label_text, key):
         # Container frame
-        container = tk.Frame(parent, bg=CONTAINER_BACKGROUND, relief=tk.RAISED, bd=1)
+        container = tk.Frame(parent, relief=tk.RAISED, bd=1)
         container.pack(fill=tk.X, padx=10, pady=10)
         
         # Label
-        label = tk.Label(container, text=label_text, font=("Arial", 10, "bold"), bg=CONTAINER_BACKGROUND)
+        label = tk.Label(container, text=label_text, font=("Arial", 10, "bold"))
         label.pack(anchor=tk.W, padx=10, pady=(10, 5))
         
         # Browse button
-        browse_btn = ttk.Button(
+        browse_btn = Button(
             container,
             text="Browse",
             command=lambda: self.browse_folder(key),
-            style="Modern.TButton",
+            highlightbackground=NOTEBOOK_TAB_BACKGROUND,
+            focusthickness=0,
         )
         browse_btn.pack(pady=10)
         
         # File path display
         path_var = tk.StringVar()
-        path_label = tk.Label(container, textvariable=path_var, bg=CONTAINER_BACKGROUND, fg=LABEL_TEXT_DARK, wraplength=400)
+        path_label = tk.Label(container, textvariable=path_var, fg=FILE_PATH_FG, wraplength=400)
         path_label.pack(anchor=tk.W, padx=10, pady=(0, 10))
         
         # Store references
@@ -621,25 +613,26 @@ class TimesheetCheckerApp:
 
     def create_file_input(self, parent, label_text, key, filetypes):
         # Container frame
-        container = tk.Frame(parent, bg=CONTAINER_BACKGROUND, relief=tk.RAISED, bd=1)
+        container = tk.Frame(parent, relief=tk.RAISED, bd=1)
         container.pack(fill=tk.X, padx=10, pady=10)
         
         # Label
-        label = tk.Label(container, text=label_text, font=("Arial", 10, "bold"), bg=CONTAINER_BACKGROUND)
+        label = tk.Label(container, text=label_text, font=("Arial", 10, "bold"))
         label.pack(anchor=tk.W, padx=10, pady=(10, 5))
         
         # Browse button
-        browse_btn = ttk.Button(
+        browse_btn = Button(
             container,
             text="Browse",
             command=lambda: self.browse_file(key, filetypes),
-            style="Modern.TButton",
+            highlightbackground=NOTEBOOK_TAB_BACKGROUND,
+            focusthickness=0,
         )
         browse_btn.pack(pady=10)
         
         # File path display
         path_var = tk.StringVar()
-        path_label = tk.Label(container, textvariable=path_var, bg=CONTAINER_BACKGROUND, fg=LABEL_TEXT_DARK, wraplength=400)
+        path_label = tk.Label(container, textvariable=path_var, fg=FILE_PATH_FG, wraplength=400)
         path_label.pack(anchor=tk.W, padx=10, pady=(0, 10))
         
         # Store references
@@ -648,29 +641,30 @@ class TimesheetCheckerApp:
         
     def create_output_file_input(self, parent, label_text, key, filetypes):
         # Container frame
-        container = tk.Frame(parent, bg=CONTAINER_BACKGROUND, relief=tk.RAISED, bd=1)
+        container = tk.Frame(parent, relief=tk.RAISED, bd=1)
         container.pack(fill=tk.X, padx=10, pady=10)
         
         # Label
-        label = tk.Label(container, text=label_text, font=("Arial", 10, "bold"), bg=CONTAINER_BACKGROUND)
+        label = tk.Label(container, text=label_text, font=("Arial", 10, "bold"))
         label.pack(anchor=tk.W, padx=10, pady=(10, 5))
         
         # Browse button and path display in same row
-        button_frame = tk.Frame(container, bg=CONTAINER_BACKGROUND)
+        button_frame = tk.Frame(container)
         button_frame.pack(fill=tk.X, padx=10, pady=5)
-        
-        browse_btn = ttk.Button(
+
+        browse_btn = Button(
             button_frame,
             text="Choose Location",
             command=lambda: self.browse_output_file(key, filetypes),
-            style="Modern.TButton",
+            highlightbackground=NOTEBOOK_TAB_BACKGROUND,
+            focusthickness=0,
         )
         browse_btn.pack(side=tk.LEFT, padx=(0, 10))
         
         # File path display
         path_var = tk.StringVar()
         path_var.set("No location selected (will use default: all_timesheets.xlsx)")
-        path_label = tk.Label(button_frame, textvariable=path_var, bg=CONTAINER_BACKGROUND, fg=LABEL_TEXT_DARK, wraplength=300)
+        path_label = tk.Label(button_frame, textvariable=path_var, fg=FILE_PATH_FG, wraplength=300)
         path_label.pack(side=tk.LEFT, anchor=tk.W, pady=(0, 10))
         
         # Store references
